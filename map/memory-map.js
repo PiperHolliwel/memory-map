@@ -39,21 +39,23 @@
       search: 'Suchen…', all: 'Alle', allCountries: 'Alle Länder', routes: 'Wege der Erinnerung', noRoute: '— Weg wählen —',
       details: 'Details', navigate: 'Hierhin navigieren', website: 'Website', close: 'Schließen',
       stop: 'Station', of: 'von', prev: 'Zurück', next: 'Weiter', endRoute: 'Weg beenden',
-      openInMaps: 'Gesamten Weg in Google Maps öffnen', results: 'Orte', loadError: 'Die Kartendaten konnten nicht geladen werden.',
-      tapAgain: 'Erneut tippen für Details'
+      openInMaps: 'Gesamten Weg in Google Maps öffnen', results: 'Orte', result: 'Ort', loadError: 'Die Kartendaten konnten nicht geladen werden.',
+      tapAgain: 'Erneut tippen für Details',
+      noResults: 'Keine Orte gefunden.', reset: 'Filter zurücksetzen'
     },
     en: {
       search: 'Search…', all: 'All', allCountries: 'All countries', routes: 'Remembrance routes', noRoute: '— Choose a route —',
       details: 'Details', navigate: 'Navigate here', website: 'Website', close: 'Close',
       stop: 'Stop', of: 'of', prev: 'Back', next: 'Next', endRoute: 'End route',
-      openInMaps: 'Open whole route in Google Maps', results: 'places', loadError: 'The map data could not be loaded.',
-      tapAgain: 'Tap again for details'
+      openInMaps: 'Open whole route in Google Maps', results: 'places', result: 'place', loadError: 'The map data could not be loaded.',
+      tapAgain: 'Tap again for details',
+      noResults: 'No places found.', reset: 'Reset filters'
     }
   };
 
-var DEFAULT_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-var DEFAULT_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-var CAN_HOVER = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+  var DEFAULT_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  var DEFAULT_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  var CAN_HOVER = window.matchMedia && window.matchMedia('(hover: hover)').matches;
 
   /* ---------- Helpers ---------- */
 
@@ -128,7 +130,12 @@ var CAN_HOVER = window.matchMedia && window.matchMedia('(hover: hover)').matches
     this.bar = el('div', 'dm-bar');
     this.search = el('input', 'dm-search');
     this.search.type = 'search';
-    this.search.addEventListener('input', function () { self.query = this.value.trim().toLowerCase(); self.applyFilters(); });
+    var searchTimer;
+    this.search.addEventListener('input', function () {
+      var v = this.value;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () { self.query = v.trim().toLowerCase(); self.applyFilters(true); }, 350);
+    });
     this.chips = el('div', 'dm-chips');
     this.countrySel = el('select', 'dm-country-select');
     this.countrySel.addEventListener('change', function () { self.country = this.value; self.applyFilters(true); });
@@ -138,13 +145,16 @@ var CAN_HOVER = window.matchMedia && window.matchMedia('(hover: hover)').matches
     this.langBtn.type = 'button';
     this.langBtn.addEventListener('click', function () { self.setLang(self.lang === 'de' ? 'en' : 'de'); });
     this.count = el('span', 'dm-count');
-    this.bar.append(this.search, this.countrySel, this.chips, this.routeSel, this.count, this.langBtn);
+    this.count.setAttribute('aria-live', 'polite');
+    this.bar.append(this.search, this.langBtn, this.countrySel, this.routeSel, this.chips, this.count);
 
     this.stage = el('div', 'dm-stage');
     this.mapEl = el('div', 'dm-map');
     this.panel = el('aside', 'dm-panel');
     this.panel.setAttribute('aria-live', 'polite');
-    this.stage.append(this.mapEl, this.panel);
+    this.empty = el('div', 'dm-empty');
+    this.empty.hidden = true;
+    this.stage.append(this.mapEl, this.empty, this.panel);
     root.append(this.bar, this.stage);
 
     this.map = L.map(this.mapEl, { zoomControl: true, scrollWheelZoom: false }).setView([47.6, 13.3], 7);
@@ -244,8 +254,30 @@ var CAN_HOVER = window.matchMedia && window.matchMedia('(hover: hover)').matches
       if (self.visible(loc)) shown.push(self.markers[loc.id]);
     });
     this.cluster.addLayers(shown);
-    this.count.textContent = shown.length + (this.route ? this.route.stops.length : 0) + ' ' + this.t('results');
-    if (fit && shown.length) this.map.fitBounds(L.featureGroup(shown).getBounds(), { padding: [40, 40], maxZoom: 14 });
+    var total = shown.length + (this.route ? this.route.stops.length : 0);
+    this.count.textContent = total + ' ' + this.t(total === 1 ? 'result' : 'results');
+    this.renderEmpty(total === 0);
+    // Move the map to the results, otherwise matches can be off-screen and the filter looks broken
+    if (fit && shown.length && !this.route) {
+      var bounds = L.featureGroup(shown).getBounds();
+      if (shown.length === 1) this.map.flyTo(bounds.getCenter(), 14, { duration: 0.6 });
+      else this.map.flyToBounds(bounds, { padding: [40, 40], maxZoom: 14, duration: 0.6 });
+    }
+  };
+
+  MemoryMap.prototype.renderEmpty = function (isEmpty) {
+    var self = this;
+    this.empty.hidden = !isEmpty;
+    if (!isEmpty) return;
+    this.empty.innerHTML = '<p>' + esc(this.t('noResults')) + '</p><button type="button">' + esc(this.t('reset')) + '</button>';
+    this.empty.querySelector('button').addEventListener('click', function () { self.resetFilters(); });
+  };
+
+  MemoryMap.prototype.resetFilters = function () {
+    this.activeCats = {}; this.country = ''; this.query = '';
+    this.search.value = ''; this.countrySel.value = '';
+    this.renderChips();
+    this.applyFilters(true);
   };
 
   /* ---------- UI text / language ---------- */
@@ -265,7 +297,7 @@ var CAN_HOVER = window.matchMedia && window.matchMedia('(hover: hover)').matches
     this.locations.forEach(function (l) { used[l.category] = true; });
     var all = el('button', 'dm-chip' + (Object.keys(this.activeCats).length ? '' : ' is-on'), esc(this.t('all')));
     all.type = 'button';
-    all.addEventListener('click', function () { self.activeCats = {}; self.renderChips(); self.applyFilters(); });
+    all.addEventListener('click', function () { self.activeCats = {}; self.renderChips(); self.applyFilters(true); });
     this.chips.append(all);
     Object.keys(used).forEach(function (key) {
       var c = cat(key);
@@ -273,11 +305,16 @@ var CAN_HOVER = window.matchMedia && window.matchMedia('(hover: hover)').matches
       b.type = 'button';
       b.setAttribute('aria-pressed', !!self.activeCats[key]);
       b.addEventListener('click', function () {
-        if (self.activeCats[key]) delete self.activeCats[key]; else self.activeCats[key] = true;
-        self.renderChips(); self.applyFilters();
+        // One category at a time: tap = show only this one, tap it again = show all
+        var wasOn = !!self.activeCats[key];
+        self.activeCats = {};
+        if (!wasOn) self.activeCats[key] = true;
+        self.renderChips(); self.applyFilters(true);
       });
       self.chips.append(b);
     });
+    var on = this.chips.querySelector('.is-on');
+    if (on && this.chips.scrollWidth > this.chips.clientWidth) this.chips.scrollLeft = on.offsetLeft - 12;
   };
 
   MemoryMap.prototype.renderCountrySelect = function () {
