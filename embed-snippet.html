@@ -1,0 +1,21 @@
+<!--
+  Memory Map — embed snippet
+  WordPress: paste into a "Custom HTML" block.
+  Webflow:   paste into an "Embed" element (or split: CSS links in Page Settings > Head, scripts before </body>).
+
+  Replace YOUR-GITHUB-USER with your GitHub username (GitHub Pages URL).
+  Replace the data URLs with the Google Sheet "Publish to web > CSV" links once the client's sheet exists.
+-->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="https://YOUR-GITHUB-USER.github.io/memory-map/map/memory-map.css">
+
+<div data-memory-map
+     data-locations="https://YOUR-GITHUB-USER.github.io/memory-map/data/locations.csv"
+     data-routes="https://YOUR-GITHUB-USER.github.io/memory-map/data/routes.csv"
+     data-lang="de"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://YOUR-GITHUB-USER.github.io/memory-map/map/memory-map.js"></script>

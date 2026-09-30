@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory Map — Prototype</title>
+  <style>
+    body { margin: 0; font-family: Georgia, "Times New Roman", serif; background: #faf9f6; color: #1d1d1b; }
+    .page { max-width: 1200px; margin: 0 auto; padding: 40px 20px 60px; }
+    .eyebrow { font: 600 12px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #b5452f; }
+    h1 { font-size: clamp(28px, 4vw, 44px); line-height: 1.1; margin: 10px 0 12px; font-weight: 500; }
+    .lead { max-width: 640px; font-size: 18px; color: #4a4945; margin: 0 0 28px; }
+    .note { font: 13px/1.5 system-ui, sans-serif; color: #6b6a66; margin-top: 16px; }
+    /* The map inherits the site's font, like it would on WordPress/Webflow */
+    [data-memory-map] { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <span class="eyebrow">Prototype · Demo data</span>
+    <h1>Karte der Erinnerung — Donauraum</h1>
+    <p class="lead">Interactive map prototype: hover a pin for a preview, click for details, filter by country or category, or follow a remembrance route step by step.</p>
+
+    <!-- ============ EMBED START (this block is what goes into WordPress / Webflow) ============ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+    <link rel="stylesheet" href="map/memory-map.css">
+
+    <div data-memory-map
+         data-locations="data/locations.csv"
+         data-routes="data/routes.csv"
+         data-lang="de"
+         data-deeplinks></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="map/memory-map.js"></script>
+    <!-- ============ EMBED END ============ -->
+
+    <p class="note">Demo content for Hungary and Slovakia only, for illustration. Texts and coordinates must be verified before real use.</p>
+  </main>
+</body>
+</html>
